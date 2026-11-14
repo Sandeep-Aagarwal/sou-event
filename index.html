@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Browse campus events, register, and keep your entry passes and certificates in one place.">
+  <title>CampusEvents — Silver Oak University</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Source+Sans+3:wght@400;500;600&family=Source+Serif+4:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Auth screen -->
+  <main id="auth-screen">
+    <section class="auth-aside" aria-hidden="true">
+      <div class="brand brand-light"><span class="brand-mark"></span>CampusEvents</div><br>
+      <img src="./images/images.png" alt="Event picture"><br>
+      <p class="auth-tagline">Register for college events, get your entry pass, and collect your certificates in one place.</p>
+    </section>
+    <section class="auth-panel">
+      <div class="auth-card">
+        <div class="brand brand-dark auth-brand-mobile"><span class="brand-mark"></span>CampusEvents</div>
+        <h1 id="auth-title">Student sign in</h1>
+        <p class="auth-sub" id="auth-sub">Use your college email to continue.</p>
+        <div id="auth-notice" class="notice hidden" role="status"></div>
+        <form id="auth-form" novalidate>
+          <div class="field hidden" id="auth-name-field">
+            <label for="auth-name">Full name</label>
+            <input type="text" id="auth-name" autocomplete="name" placeholder="Enter your full name">
+          </div>
+          <div class="field">
+            <label for="auth-email">College email</label>
+            <input type="email" id="auth-email" autocomplete="email" required>
+          </div>
+          <div class="field">
+            <label for="auth-password">Password</label>
+            <input type="password" id="auth-password" autocomplete="current-password" minlength="6" required>
+          </div>
+          <div id="auth-error" class="form-error" role="alert"></div>
+          <button type="submit" id="auth-btn" class="btn btn-primary btn-block">Sign in</button>
+        </form>
+        <p class="auth-toggle-row">
+          <span id="auth-toggle-text">New here?</span>
+          <button type="button" id="auth-toggle" class="link-btn">Create an account</button>
+        </p>
+        <p class="auth-switch"><a href="admin.html">Admin login</a></p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Main app -->
+  <div id="main-app" class="hidden">
+    <header class="site-header">
+      <div class="nav-content">
+        <div class="brand brand-light"><span class="brand-mark"></span>CampusEvents</div>
+        <div class="nav-user">
+          <span id="user-display" class="user-display"></span>
+          <button id="nav-logout" class="btn btn-outline-light btn-sm">Sign out</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="container">
+      <!-- Student view -->
+      <div id="student-view">
+        <div class="section-head">
+          <h2>Welcome, <span id="student-greeting-name">Student</span></h2>
+          <p class="muted">Browse upcoming events and register to receive your entry pass.</p>
+        </div>
+        <div class="grid" id="events-grid"></div>
+
+        <div class="section-head section-gap">
+          <h2>My passes and certificates</h2>
+          <p class="muted">Show your pass at entry. Your Silver Oak University certificate is issued once attendance is marked.</p>
+        </div>
+        <div class="grid" id="passes-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UPI Payment Modal -->
+  <div id="payment-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="pay-modal-title">
+    <div class="modal-content payment-modal-content">
+      <h3 id="pay-modal-title">Complete Event Payment</h3>
+      <p class="muted" id="pay-modal-subtitle">Scan the UPI QR code or tap Pay via UPI App.</p>
+
+      <div class="upi-box">
+        <div class="upi-amount" id="pay-modal-amount">₹0</div>
+        <img id="pay-qr-img" src="" alt="UPI QR Code" class="upi-qr">
+        <div class="upi-id-row">
+          <span id="pay-upi-id" class="upi-id-text"></span>
+          <button type="button" id="copy-upi-btn" class="btn btn-ghost btn-sm">Copy UPI ID</button>
+        </div>
+        <a id="upi-deep-link" href="#" class="btn btn-outline-primary btn-block upi-app-btn">Open UPI App (GPay / PhonePe / Paytm)</a>
+      </div>
+
+      <form id="payment-form" novalidate>
+        <div class="field">
+          <label for="utr-input">12-digit UPI Transaction / UTR ID</label>
+          <input type="text" id="utr-input" placeholder="e.g. 412345678901" minlength="8" maxlength="30" required>
+        </div>
+        <div id="pay-error" class="form-error" role="alert"></div>
+        <div class="modal-actions">
+          <button type="button" id="pay-cancel-btn" class="btn btn-ghost">Cancel</button>
+          <button type="submit" id="pay-submit-btn" class="btn btn-primary">Submit for Verification</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Certificate Preview & Download Modal -->
+  <div id="cert-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="cert-modal-title">
+    <div class="modal-content cert-modal-content">
+      <div class="cert-modal-header">
+        <div>
+          <h3 id="cert-modal-title">Official Participation Certificate</h3>
+          <p class="muted" style="margin:0;">Issued by Silver Oak University to <strong id="cert-recipient-label"></strong></p>
+        </div>
+        <button type="button" id="cert-close-btn" class="btn btn-ghost btn-sm">Close</button>
+      </div>
+
+      <div class="cert-canvas-wrap">
+        <canvas id="cert-canvas" width="1400" height="990"></canvas>
+      </div>
+
+      <div class="modal-actions cert-actions">
+        <button type="button" id="cert-download-png" class="btn btn-primary">Download PNG (High-Res)</button>
+        <button type="button" id="cert-print-pdf" class="btn btn-outline-primary">Save as PDF / Print</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="false"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
