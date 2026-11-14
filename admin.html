@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
 </head>
 <body>
 
@@ -16,8 +17,8 @@
   <main id="auth-screen">
     <section class="auth-aside" aria-hidden="true">
       <div class="brand brand-light"><span class="brand-mark"></span>CampusEvents</div><br>
-      <img src="./images/img.jpg" alt="Event picture"><br>
-      <p class="auth-tagline">Register for college events, get your entry pass, and collect your certificates in one place.</p>
+      <img src="./images/img.jpg" alt="Event picture" onerror="this.style.display='none'"><br>
+      <p class="auth-tagline">Manage campus events, scan QR passes for entry, swag kits & lunch coupons, and verify UPI payments.</p>
     </section>
     <section class="auth-panel">
       <div class="auth-card">
@@ -48,6 +49,7 @@
       <div class="nav-content">
         <div class="brand brand-light"><span class="brand-mark"></span>CampusEvents <span class="role-tag">Admin</span></div>
         <div class="nav-user">
+          <button type="button" id="open-scanner-btn" class="btn btn-gold btn-sm">Scan QR Pass</button>
           <span id="user-display" class="user-display"></span>
           <button id="nav-logout" class="btn btn-outline-light btn-sm">Sign out</button>
         </div>
@@ -55,7 +57,27 @@
     </header>
 
     <div class="container">
-      <div class="section-head">
+      <!-- Live KPI Analytics Strip -->
+      <section class="kpi-grid" aria-label="Dashboard summary">
+        <div class="card kpi-card">
+          <span class="kpi-label">Total Events</span>
+          <strong class="kpi-value" id="kpi-events">0</strong>
+        </div>
+        <div class="card kpi-card">
+          <span class="kpi-label">Total Registrations</span>
+          <strong class="kpi-value" id="kpi-regs">0</strong>
+        </div>
+        <div class="card kpi-card">
+          <span class="kpi-label">Verified Revenue</span>
+          <strong class="kpi-value" id="kpi-revenue">₹0</strong>
+        </div>
+        <div class="card kpi-card" id="kpi-pending-card">
+          <span class="kpi-label">Pending UPI Approvals</span>
+          <strong class="kpi-value" id="kpi-pending">0</strong>
+        </div>
+      </section>
+
+      <div class="section-head section-gap-sm">
         <h2>Create event</h2>
       </div>
       <section class="card form-card">
@@ -63,20 +85,57 @@
           <div class="form-row">
             <div class="field field-grow">
               <label for="event-name">Event name</label>
-              <input type="text" id="event-name" required>
+              <input type="text" id="event-name" placeholder="e.g. HackSOU 2026" required>
+            </div>
+            <div class="field">
+              <label for="event-category">Category</label>
+              <select id="event-category">
+                <option value="Tech">Tech & Hackathon</option>
+                <option value="Workshop">Workshop & Seminar</option>
+                <option value="Cultural">Cultural & Fest</option>
+                <option value="Sports">Sports</option>
+                <option value="General">General</option>
+              </select>
             </div>
             <div class="field">
               <label for="event-date">Date</label>
               <input type="date" id="event-date" required>
             </div>
+            <div class="field field-time">
+              <label for="event-time">Time (optional)</label>
+              <input type="text" id="event-time" placeholder="10:00 AM">
+            </div>
+          </div>
+          <div class="form-row">
             <div class="field field-grow">
               <label for="event-location">Venue</label>
-              <input type="text" id="event-location" required>
+              <input type="text" id="event-location" placeholder="e.g. Aryabhatta Auditorium" required>
             </div>
             <div class="field field-price">
               <label for="event-price">Ticket Price (₹)</label>
               <input type="number" id="event-price" min="0" step="1" value="0" placeholder="0 for Free" required>
             </div>
+            <div class="field field-price">
+              <label for="event-seats">Max Seats (0 = ∞)</label>
+              <input type="number" id="event-seats" min="0" step="1" value="0" placeholder="0 = Unlimited">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="field field-grow">
+              <label for="event-desc">Short description (optional)</label>
+              <input type="text" id="event-desc" placeholder="Brief summary, rules, or team size info">
+            </div>
+          </div>
+          <div class="perk-toggles-row">
+            <span class="perk-toggles-label">Digital QR Coupons Included:</span>
+            <label class="checkbox-pill">
+              <input type="checkbox" id="event-has-swag">
+              <span>Welcome / Swag Kit</span>
+            </label>
+            <label class="checkbox-pill">
+              <input type="checkbox" id="event-has-lunch">
+              <span>Lunch / Meal Coupon</span>
+            </label>
           </div>
           <button type="submit" class="btn btn-primary" id="create-event-btn">Create event</button>
         </form>
@@ -85,13 +144,50 @@
       <div class="section-head section-gap section-head-flex">
         <div>
           <h2>Manage events</h2>
-          <p class="muted">Verify UPI payments, download student payment lists, and mark attendance.</p>
+          <p class="muted">Verify UPI payments, filter attendees, track meal/swag redemptions, and export lists.</p>
         </div>
-        <button type="button" id="download-all-csv-btn" class="btn btn-outline-primary btn-sm">
-          Download All Students Payment List (CSV)
-        </button>
+        <div class="admin-toolbar">
+          <input type="search" id="admin-attendee-search" class="filter-search-sm" placeholder="Filter by student name, email, or UTR…">
+          <select id="admin-status-filter" class="filter-select-sm" aria-label="Filter registrations by status">
+            <option value="all">All Statuses</option>
+            <option value="pending">Pending UTR Only</option>
+            <option value="confirmed">Confirmed (Paid / Free)</option>
+            <option value="present">Present Only</option>
+          </select>
+          <button type="button" id="download-all-csv-btn" class="btn btn-outline-primary btn-sm">
+            Export All CSV
+          </button>
+        </div>
       </div>
       <div class="grid" id="admin-events-grid"></div>
+    </div>
+  </div>
+
+  <!-- Multi-Mode QR Scanner Modal -->
+  <div id="scanner-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="scanner-modal-title">
+    <div class="modal-content">
+      <div class="cert-modal-header">
+        <div>
+          <h3 id="scanner-modal-title">Universal QR Desk Scanner</h3>
+          <p class="muted" style="margin:0;">Select checkpoint mode below and scan the student's QR pass.</p>
+        </div>
+        <button type="button" id="scanner-close-btn" class="btn btn-ghost btn-sm">Close</button>
+      </div>
+
+      <!-- Checkpoint Mode Switcher -->
+      <div class="scanner-mode-bar" role="radiogroup" aria-label="Scanner checkpoint mode">
+        <button type="button" class="mode-tab is-active" data-scan-mode="entry">Gate Entry</button>
+        <button type="button" class="mode-tab" data-scan-mode="swag">Swag Kit</button>
+        <button type="button" class="mode-tab" data-scan-mode="lunch">Lunch Coupon</button>
+      </div>
+
+      <div id="qr-reader" class="qr-reader-box"></div>
+      <div id="scan-result-banner" class="scan-result hidden"></div>
+
+      <form id="manual-checkin-form" class="manual-checkin-row">
+        <input type="text" id="manual-pass-id" placeholder="Paste or type Pass ID…" required>
+        <button type="submit" class="btn btn-primary btn-sm" id="manual-scan-submit">Redeem</button>
+      </form>
     </div>
   </div>
 

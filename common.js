@@ -41,12 +41,14 @@ export const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (c)
 export const icons = {
   calendar: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
   pin: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>',
-  download: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'
+  download: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+  users: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  gift: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>'
 };
 
 export function formatPrice(price) {
   const num = Number(price || 0);
-  return num > 0 ? `₹${num}` : 'Free';
+  return num > 0 ? `\u20B9${num}` : 'Free';
 }
 
 export function buildUpiUri(amount, note = 'Event Registration') {
@@ -60,31 +62,46 @@ export function buildUpiUri(amount, note = 'Event Registration') {
   return `upi://pay?${params.toString()}`;
 }
 
+export function getQrImageUrl(data, size = 180) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(data)}`;
+}
+
 export function formatDisplayName(studentName, email) {
   if (studentName && String(studentName).trim()) return String(studentName).trim();
   const prefix = String(email || '').split('@')[0] || 'Student';
   return prefix
     .replace(/[._-]+/g, ' ')
-    .replace(/\w/g, (c) => c.toUpperCase());
+    .replace(/ \w/g, (c) => c.toUpperCase());
 }
 
 function parseDate(value) {
   const [y, m, d] = String(value).split('-').map(Number);
   return y && m && d ? new Date(y, m - 1, d) : null;
 }
+
 export function formatDate(value) {
   const d = parseDate(value);
   return d ? d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : escapeHtml(value);
 }
+
 export function formatLongDate(value) {
   const d = parseDate(value);
   return d ? d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : String(value || '');
 }
+
 export function dateTile(value) {
   const d = parseDate(value);
   if (!d) return '';
   const month = d.toLocaleDateString(undefined, { month: 'short' });
   return `<div class="date-tile" aria-hidden="true"><div class="month">${escapeHtml(month.toUpperCase())}</div><div class="day">${d.getDate()}</div></div>`;
+}
+
+export function isPastDate(value) {
+  const d = parseDate(value);
+  if (!d) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return d < today;
 }
 
 export function toast(message, type = '') {

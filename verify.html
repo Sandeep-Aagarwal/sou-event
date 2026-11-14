@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Certificate — Silver Oak University</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Source+Sans+3:wght@400;500;600&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-content">
+      <div class="brand brand-light"><span class="brand-mark"></span>CampusEvents <span class="role-tag">Verify</span></div>
+      <div class="nav-user">
+        <a href="index.html" class="btn btn-outline-light btn-sm">Student Portal</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="max-width: 640px;">
+    <div class="section-head">
+      <h2>Certificate Verification</h2>
+      <p class="muted">Verify the authenticity of an official Silver Oak University event participation certificate.</p>
+    </div>
+
+    <section class="card form-card">
+      <form id="verify-form">
+        <div class="field">
+          <label for="cert-id-input">Certificate ID</label>
+          <input type="text" id="cert-id-input" placeholder="Enter Certificate ID from the bottom-left of the certificate" required>
+        </div>
+        <button type="submit" id="verify-btn" class="btn btn-primary btn-block">Verify Certificate</button>
+      </form>
+
+      <div id="verify-result" class="verify-box hidden"></div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { db, $, escapeHtml, formatLongDate, formatDisplayName } from "./common.js";
+
+    const form = $('verify-form');
+    const input = $('cert-id-input');
+    const resultBox = $('verify-result');
+
+    async function verifyCertificate(certId) {
+      const cleanId = String(certId || '').trim();
+      if (!cleanId) return;
+
+      resultBox.className = 'verify-box';
+      resultBox.innerHTML = '<p class="muted">Checking Silver Oak University records…</p>';
+      resultBox.classList.remove('hidden');
+
+      try {
+        const snap = await getDoc(doc(db, "registrations", cleanId));
+        if (!snap.exists()) {
+          resultBox.className = 'verify-box verify-invalid';
+          resultBox.innerHTML = `<strong>Certificate Not Found</strong><p>No record matches Certificate ID <code>${escapeHtml(cleanId)}</code>.</p>`;
+          return;
+        }
+
+        const data = snap.data();
+        if (!data.attended || data.paymentStatus === 'rejected' || data.paymentStatus === 'pending') {
+          resultBox.className = 'verify-box verify-invalid';
+          resultBox.innerHTML = `<strong>Certificate Not Issued</strong><p>This registration exists, but attendance has not been verified for certificate issuance.</p>`;
+          return;
+        }
+
+        const studentName = formatDisplayName(data.studentName, data.userEmail);
+        const acadInfo = [data.enrollment, data.department].filter(Boolean).join(' • ');
+
+        resultBox.className = 'verify-box verify-valid';
+        resultBox.innerHTML = `
+          <div class="verify-badge">✓ Authentic Silver Oak University Certificate</div>
+          <h3>${escapeHtml(studentName)}</h3>
+          ${acadInfo ? `<p class="muted" style="margin-bottom:0.75rem;">${escapeHtml(acadInfo)}</p>` : ''}
+          <dl class="verify-details">
+            <div><dt>Event</dt><dd>${escapeHtml(data.eventName)}</dd></div>
+            <div><dt>Event Date</dt><dd>${escapeHtml(formatLongDate(data.eventDate))}</dd></div>
+            <div><dt>Certificate ID</dt><dd><code>${escapeHtml(cleanId)}</code></dd></div>
+            <div><dt>Status</dt><dd>Verified Attendance & Participation</dd></div>
+          </dl>
+        `;
+      } catch (err) {
+        console.error(err);
+        resultBox.className = 'verify-box verify-invalid';
+        resultBox.innerHTML = `<strong>Verification Unavailable</strong><p>Ensure public read access is enabled on registrations in Firestore rules, or try again later.</p>`;
+      }
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      verifyCertificate(input.value);
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    const idFromUrl = params.get('id');
+    if (idFromUrl) {
+      input.value = idFromUrl;
+      verifyCertificate(idFromUrl);
+    }
+  </script>
+</body>
+</html>

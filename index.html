@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Browse campus events, register, and keep your entry passes and certificates in one place.">
+  <meta name="description" content="Browse campus events, register, and keep your entry passes, meal coupons, and certificates in one place.">
   <title>CampusEvents — Silver Oak University</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,8 +16,8 @@
   <main id="auth-screen">
     <section class="auth-aside" aria-hidden="true">
       <div class="brand brand-light"><span class="brand-mark"></span>CampusEvents</div><br>
-      <img src="./images/images.png" alt="Event picture"><br>
-      <p class="auth-tagline">Register for college events, get your entry pass, and collect your certificates in one place.</p>
+      <img src="./images/images.png" alt="Event picture" onerror="this.style.display='none'"><br>
+      <p class="auth-tagline">Register for college events, get your QR entry & perk pass, and collect verified certificates in one place.</p>
     </section>
     <section class="auth-panel">
       <div class="auth-card">
@@ -30,12 +30,31 @@
             <label for="auth-name">Full name</label>
             <input type="text" id="auth-name" autocomplete="name" placeholder="Enter your full name">
           </div>
+          <div class="field hidden" id="auth-enrollment-field">
+            <label for="auth-enrollment">Enrollment / Student ID</label>
+            <input type="text" id="auth-enrollment" placeholder="e.g. 220103100045">
+          </div>
+          <div class="field hidden" id="auth-dept-field">
+            <label for="auth-dept">Department / Institute</label>
+            <select id="auth-dept">
+              <option value="">Select department</option>
+              <option value="SOCET (Computer / IT)">SOCET (Computer / IT)</option>
+              <option value="ASOIT (Engineering)">ASOIT (Engineering)</option>
+              <option value="SOCCA (Computer Applications)">SOCCA (Computer Applications)</option>
+              <option value="SOCM (Management)">SOCM (Management)</option>
+              <option value="SOCS (Science)">SOCS (Science)</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
           <div class="field">
             <label for="auth-email">College email</label>
             <input type="email" id="auth-email" autocomplete="email" required>
           </div>
           <div class="field">
-            <label for="auth-password">Password</label>
+            <div class="label-row">
+              <label for="auth-password">Password</label>
+              <button type="button" id="forgot-password-btn" class="link-btn text-xs">Forgot password?</button>
+            </div>
             <input type="password" id="auth-password" autocomplete="current-password" minlength="6" required>
           </div>
           <div id="auth-error" class="form-error" role="alert"></div>
@@ -45,7 +64,7 @@
           <span id="auth-toggle-text">New here?</span>
           <button type="button" id="auth-toggle" class="link-btn">Create an account</button>
         </p>
-        <p class="auth-switch"><a href="admin.html">Admin login</a></p>
+        <p class="auth-switch"><a href="admin.html">Admin login</a> · <a href="verify.html">Verify a certificate</a></p>
       </div>
     </section>
   </main>
@@ -67,13 +86,32 @@
       <div id="student-view">
         <div class="section-head">
           <h2>Welcome, <span id="student-greeting-name">Student</span></h2>
-          <p class="muted">Browse upcoming events and register to receive your entry pass.</p>
+          <p class="muted">Browse upcoming events and register to receive your all-in-one QR pass.</p>
         </div>
+
+        <!-- Search & Category Filter Bar -->
+        <div class="filter-bar">
+          <input type="search" id="event-search" class="filter-search" placeholder="Search events by name or venue…">
+          <select id="event-category-filter" class="filter-select" aria-label="Filter by category">
+            <option value="all">All Categories</option>
+            <option value="Tech">Tech & Hackathon</option>
+            <option value="Workshop">Workshop & Seminar</option>
+            <option value="Cultural">Cultural & Fest</option>
+            <option value="Sports">Sports</option>
+            <option value="General">General</option>
+          </select>
+          <select id="event-price-filter" class="filter-select" aria-label="Filter by fee">
+            <option value="all">All Events</option>
+            <option value="free">Free Only</option>
+            <option value="paid">Paid Only</option>
+          </select>
+        </div>
+
         <div class="grid" id="events-grid"></div>
 
         <div class="section-head section-gap">
-          <h2>My passes and certificates</h2>
-          <p class="muted">Show your pass at entry. Your Silver Oak University certificate is issued once attendance is marked.</p>
+          <h2>My passes, coupons & certificates</h2>
+          <p class="muted">One QR code handles Gate Entry, Swag Kits, and Lunch Coupons. Your SOU certificate unlocks once attendance is scanned.</p>
         </div>
         <div class="grid" id="passes-grid"></div>
       </div>
@@ -126,6 +164,7 @@
       </div>
 
       <div class="modal-actions cert-actions">
+        <a id="cert-verify-link" href="verify.html" target="_blank" class="btn btn-ghost">Verify Online</a>
         <button type="button" id="cert-download-png" class="btn btn-primary">Download PNG (High-Res)</button>
         <button type="button" id="cert-print-pdf" class="btn btn-outline-primary">Save as PDF / Print</button>
       </div>
